@@ -1,0 +1,40 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Flask runtime files
+instance/
+.env
+.env.*
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Caches and test artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.mypy_cache/
+.pyre/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Celery Beat's persistent schedule file
+celerybeat-schedule
+celerybeat.pid

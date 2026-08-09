@@ -1,0 +1,20 @@
+Flask==3.1.3
+Flask-RESTful==0.3.10
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.48
+Werkzeug==3.1.7
+Jinja2==3.1.6
+
+flask-jwt-extended==4.6.0
+flask-cors==4.0.0
+
+# ── Celery + Redis (Milestone 7) ──────────────────────────────────────────────
+celery==5.3.6
+redis==5.0.1
+flower==2.0.1          # optional Celery monitoring UI
+
+# ── PDF generation for placement reports (Milestone 7) ────────────────────────
+fpdf2==2.7.9
+
+# ── Caching (Milestone 8) ─────────────────────────────────────────────────────
+flask-caching==2.1.0
