@@ -13,12 +13,6 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 # install dependencies
 pip install -r requirements.txt
 
-# point the app at a local dev SMTP server (Mailhog)
-export MAIL_SERVER=localhost    # Windows: set MAIL_SERVER=localhost
-export MAIL_PORT=1025           # Windows: set MAIL_PORT=1025
-export MAIL_USERNAME=demo       # Windows: set MAIL_USERNAME=demo
-export MAIL_PASSWORD=demo       # Windows: set MAIL_PASSWORD=demo
-
 # seed the database with demo admin/company/student accounts
 python init_db.py
 ```
@@ -75,13 +69,30 @@ Arrange windows beforehand: browser (main), a second browser/incognito window (f
 
 ---
 
-## 4. Caching demo (45s) — matches your original plan
-**Do:**
-1. Hit the `/cacheremove` debug route (or whatever cache-clearing route you wired up) to guarantee a cold cache.
-2. Navigate to a cached page (e.g. Browse Drives) — visibly wait ~5s (your artificial `time.sleep(5)` on cache miss).
-3. Reload the same page — instant load.
+## 4. Caching demo (60–75s)
 
-**Say:** First load is a cache miss — hits the DB, then Flask-Caching writes the result into Redis. Second load is a cache hit — served straight from Redis, no DB query at all.
+**Step 1 — Clear the cache (guarantee a cold start)**
+Navigate to `http://localhost:5000/cacheremove`. You should see:
+```json
+{ "msg": "Cache cleared successfully." }
+```
+This flushes Redis and guarantees the next request is a genuine cache miss.
+
+> 🎙️ **Say:** "Before we start, I'm hitting a debug route that flushes Redis — this guarantees what you're about to see is a real cache miss, not a leftover cached result from earlier."
+
+**Step 2 — First load: cache miss**
+Log in as a student (`student1@test.com` / `password123`) and click **Browse Drives**. Watch the loading spinner run for a couple of seconds.
+
+*(Optional, stronger on camera)* Open DevTools → Network tab → click the `drives` request → point out the response time (a couple thousand ms) — proof this hit the database.
+
+> 🎙️ **Say:** "This first load is a cache miss. The request goes all the way to the database, and while it's there, Flask-Caching writes the result into Redis before sending it back — that's why it takes a moment."
+
+**Step 3 — Navigate away and back: cache hit**
+Click **Dashboard** in the nav, then click **Browse Drives** again (rather than just hitting refresh — this proves it's the *route* that's cached, not just a browser-level reload).
+
+*(Optional)* Check the Network tab again — response time should now be single-digit milliseconds.
+
+> 🎙️ **Say:** "Now watch what happens when I navigate away to the dashboard and come back to the same page. No spinner, no delay — this time the response is served straight out of Redis in a couple of milliseconds, with zero database queries. Same route, same data, completely different cost, because the second request never touches the database at all."
 
 ---
 
@@ -116,7 +127,21 @@ This is the most "impressive" section — make sure it's clearly staged.
 **Do:**
 1. Switch to `localhost:8025` (Mailhog inbox) — the email from the broadcast you just sent should already be sitting there.
 2. Open it — show subject + body rendered.
-3. (Optional, stronger) trigger `send_monthly_report` instead/also, to show the PDF attachment landing in Mailhog.
+3. *(Optional, stronger)* Trigger `send_monthly_report` as well, to show the PDF attachment landing in Mailhog. Two ways to do this:
+
+**Option A — Via a debug admin route (if you built one):**
+Call it the same way you trigger the broadcast — through the UI or a quick `curl`/Postman request to whatever route wires up `send_monthly_report.delay()`.
+
+**Option B — Via Browser Console (when logged in as Admin):**
+1. Log into the portal as Admin (`admin@placementportal.com` / `admin123`).
+2. Open F12 Developer Tools → Console tab.
+3. Paste and run:
+   ```javascript
+   window.api.post('/admin/trigger-monthly-report').then(res => console.log(res.data));
+   ```
+4. Check your Admin notifications, or inspect the generated PDF files under `static/reports/`.
+
+> 🎙️ **Say:** "Instead of waiting for the actual monthly cron, I'm triggering the report task directly through the browser console — same underlying Celery task, same queue, just fired manually so we don't have to wait for the 1st of the month."
 
 **Say:** In production this would point at a real SMTP provider — for local dev and this demo, Mailhog catches everything so we can verify the email pipeline works end-to-end without sending real mail or needing real credentials.
 
