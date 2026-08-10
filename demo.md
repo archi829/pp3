@@ -1,13 +1,50 @@
 # Placement Portal — Demo Video Script
 
 Total suggested length: ~8–10 minutes. Have these running *before* you hit record:
+
+**One-time setup (skip if already done):**
 ```bash
+cd placement-portal-mad2-main
+
+# create + activate a virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# install dependencies
+pip install -r requirements.txt
+
+# point the app at a local dev SMTP server (Mailhog)
+export MAIL_SERVER=localhost    # Windows: set MAIL_SERVER=localhost
+export MAIL_PORT=1025           # Windows: set MAIL_PORT=1025
+export MAIL_USERNAME=demo       # Windows: set MAIL_USERNAME=demo
+export MAIL_PASSWORD=demo       # Windows: set MAIL_PASSWORD=demo
+
+# seed the database with demo admin/company/student accounts
+python init_db.py
+```
+
+**Every time, right before recording (each in its own terminal tab):**
+```bash
+# 1. Redis — Celery's broker/result-backend + the cache store
 redis-server
-celery -A celery_worker.celery worker --loglevel=info
-celery -A celery_worker.celery beat --loglevel=info
+
+# 2. Mailhog — fake SMTP server + web inbox at localhost:8025
 docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+
+# 3. Celery worker — executes queued tasks
+source venv/bin/activate
+celery -A celery_worker.celery worker --loglevel=info
+
+# 4. Celery beat — schedules the cron-style tasks (interview reminders, monthly report)
+source venv/bin/activate
+celery -A celery_worker.celery beat --loglevel=info
+
+# 5. Flask app
+source venv/bin/activate
 python app.py
 ```
+Then open `http://localhost:5000` (or whatever port `app.py` prints) in the browser.
+
 Arrange windows beforehand: browser (main), a second browser/incognito window (for a second role), and a terminal panel showing the Celery worker log — you'll cut to it twice.
 
 ---
